@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+################################################################################
+# git-sync-all - Sync all Git repositories in a directory tree
+#
+# Scans directories for Git repositories and synchronizes them:
+# commit uncommitted changes, pull from remote, push to remote, sync tags.
+#
+# Usage: git-sync-all [OPTIONS] [DIRECTORY...]
+#        git-sync-all --help
+#
+# https://github.com/markus-michalski/git-sync-all
+################################################################################
+
+readonly GSA_VERSION="1.0.0"
+
+# Resolve script directory (follow symlinks)
+_gsa_resolve_dir() {
+    local source="${BASH_SOURCE[0]}"
+    while [[ -L "$source" ]]; do
+        local dir
+        dir="$(cd -P "$(dirname "$source")" && pwd)"
+        source="$(readlink "$source")"
+        [[ "$source" != /* ]] && source="$dir/$source"
+    done
+    cd -P "$(dirname "$source")/.." && pwd
+}
+
+GSA_SCRIPT_DIR="$(_gsa_resolve_dir)"
+readonly GSA_SCRIPT_DIR
+readonly GSA_LIB_DIR="${GSA_SCRIPT_DIR}/lib"
+
+# Source all libraries
+for _gsa_lib in core config cli repo-discovery git-ops sync; do
+    # shellcheck source=/dev/null
+    source "${GSA_LIB_DIR}/${_gsa_lib}.sh"
+done
+unset _gsa_lib
+
+# ── Main ─────────────────────────────────────────────────────────────────────
+main() {
+    # 1. Parse CLI args (before config, to get --config path and early exits)
+    parse_args "$@"
+
+    # 2. Load config (respects CONFIG_FILE from CLI)
+    load_config "${CONFIG_FILE:-}"
+
+    # 3. Apply CLI overrides (they take priority over config)
+    apply_cli_overrides
+
+    # 4. Setup environment (color detection, lock file, dependency check)
+    setup_environment
+
+    # 5. Print header
+    log_info "git-sync-all v${GSA_VERSION}"
+    log_info "Scanning: ${SYNC_BASE_DIRS//:/, }"
+    log_debug "Hostname: $(hostname)"
+    [[ "${DRY_RUN:-false}" == "true" ]] && log_warn "DRY-RUN mode (no changes will be made)"
+    echo "" >&2
+
+    # 6. Discover repositories
+    local -a repos=()
+    discover_repos repos
+
+    if [[ ${#repos[@]} -eq 0 ]]; then
+        log_warn "No Git repositories found in: ${SYNC_BASE_DIRS//:/, }"
+        exit 0
+    fi
+
+    echo "" >&2
+
+    # 7. Run sync or status-only
+    local stats
+    if [[ "${STATUS_ONLY:-false}" == "true" ]]; then
+        stats=$(show_status repos)
+    else
+        stats=$(sync_all repos)
+    fi
+
+    # 8. Print summary
+    print_summary "$stats"
+
+    # 9. Exit code based on failures
+    local failed
+    failed=$(echo "$stats" | cut -d: -f5)
+    [[ "$failed" -gt 0 ]] && exit 1
+    exit 0
+}
+
+main "$@"

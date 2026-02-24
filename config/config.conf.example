@@ -1,0 +1,63 @@
+# git-sync-all configuration
+# Copy to ~/.config/git-sync-all/config.conf
+#
+# All settings are optional. Defaults are shown in comments.
+# Environment variables and CLI flags override these values.
+
+# ── Repository Discovery ────────────────────────────────────────────────────
+
+# Directories to scan for Git repositories (colon-separated)
+# Example: "$HOME/work:$HOME/personal"
+SYNC_BASE_DIRS="$HOME/projekte"
+
+# Maximum depth for repo discovery (how many levels deep to scan)
+# 1 = only direct children, 2 = grandchildren, etc.
+SYNC_SCAN_DEPTH=3
+
+# Exclude repos by name (colon-separated glob patterns)
+# Matched against the directory name, not the full path
+# Example: "node_modules:vendor:.cache:__pycache__"
+# SYNC_EXCLUDE=""
+
+# Only sync these repos (colon-separated glob patterns)
+# If set, ONLY repos matching a pattern will be synced
+# Example: "my-project:other-project"
+# SYNC_INCLUDE=""
+
+# ── Commit Behavior ─────────────────────────────────────────────────────────
+
+# Default commit message template
+# Available placeholders: {hostname}, {date}, {repo}
+SYNC_COMMIT_MSG="chore: auto-sync from {hostname}"
+
+# Extended commit body (appears after a blank line in the commit)
+SYNC_COMMIT_BODY="Automatic synchronization of uncommitted changes."
+
+# ── Sync Behavior ───────────────────────────────────────────────────────────
+
+# Auto-confirm all repos without asking (same as --yes flag)
+# Set to true for cron jobs or CI environments
+SYNC_AUTO_CONFIRM=false
+
+# Pull strategy: rebase (default) or merge
+# rebase: Cleaner history, no merge commits
+# merge:  Preserves exact history, creates merge commits
+SYNC_PULL_STRATEGY="rebase"
+
+# Sync tags from remote (fetch --tags --prune-tags)
+SYNC_TAGS=true
+
+# Remote name to sync with
+SYNC_REMOTE="origin"
+
+# ── Output ──────────────────────────────────────────────────────────────────
+
+# Color output: auto (default), true, false
+# auto = colors only if stderr is a terminal
+SYNC_COLOR="auto"
+
+# Verbosity level
+# 0 = quiet (errors only)
+# 1 = normal (default)
+# 2 = verbose (debug info)
+SYNC_VERBOSITY=1

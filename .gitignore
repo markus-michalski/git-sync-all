@@ -1,0 +1,16 @@
+# Claude Code (private/local)
+CLAUDE.md
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+tests/tmp/

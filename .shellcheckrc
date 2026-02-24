@@ -1,0 +1,16 @@
+shell=bash
+enable=all
+# Allow sourcing with variable paths
+disable=SC1090,SC1091
+# Cross-file variables (set in one sourced file, used in another)
+disable=SC2034
+# Cross-file variable references (referenced but not assigned in this file)
+disable=SC2154
+# Style: prefer braces around variables (too noisy, no correctness impact)
+disable=SC2250
+# Info: separate command invocation for return values (intended pattern)
+disable=SC2312
+# Info: function in if/|| condition disables set -e (intentional in tests)
+disable=SC2310
+# Info: consider adding default case (handled where meaningful)
+disable=SC2249

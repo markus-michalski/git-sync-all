@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: './bin ./lib'
+
+  format:
+    name: shfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shfmt
+        run: |
+          curl -sS https://webinstall.dev/shfmt | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Check formatting
+        run: shfmt -d -i 4 -ci -bn bin/git-sync-all lib/*.sh
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Git
+        run: |
+          git config --global user.email "ci@test.com"
+          git config --global user.name "CI Test"
+          git config --global init.defaultBranch main
+      - name: Run tests
+        run: make test
