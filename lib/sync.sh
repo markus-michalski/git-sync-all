@@ -96,7 +96,7 @@ sync_repository() {
 
     # Sync tags first (if enabled)
     if [[ "${SYNC_TAGS:-true}" == "true" ]]; then
-        if ! sync_tags "$repo_path" 2>/dev/null; then
+        if ! sync_tags "$repo_path" >/dev/null 2>/dev/null; then
             log_debug "  Tag sync failed (non-critical)"
         fi
     fi
@@ -120,7 +120,7 @@ sync_repository() {
         commit_msg="$(_ask_commit_msg)"
 
         log_info "  Committing changes..."
-        if commit_changes "$repo_path" "$commit_msg" "${SYNC_COMMIT_BODY:-}"; then
+        if commit_changes "$repo_path" "$commit_msg" "${SYNC_COMMIT_BODY:-}" >/dev/null; then
             log_ok "  Changes committed"
             did_something=true
         else
@@ -138,7 +138,7 @@ sync_repository() {
             log_info "  ${unpulled_count} unpulled commit(s) from remote"
 
             log_info "  Pulling from remote..."
-            if pull_changes "$repo_path" 2>/dev/null; then
+            if pull_changes "$repo_path" >/dev/null 2>/dev/null; then
                 log_ok "  Pulled successfully"
                 did_something=true
             else
@@ -157,7 +157,7 @@ sync_repository() {
             log_info "  ${unpushed_count} unpushed commit(s)"
 
             log_info "  Pushing to remote..."
-            if push_commits "$repo_path" 2>/dev/null; then
+            if push_commits "$repo_path" >/dev/null 2>/dev/null; then
                 log_ok "  Pushed successfully"
                 did_something=true
             else
