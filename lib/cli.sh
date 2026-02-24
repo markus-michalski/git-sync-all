@@ -207,9 +207,9 @@ show_version() {
 # ── Alias Setup ──────────────────────────────────────────────────────────────
 setup_aliases() {
     local bin_path
-    bin_path="$(readlink -f "${BASH_SOURCE[0]}")"
-    # Resolve to the actual bin/git-sync-all, not lib/cli.sh
-    bin_path="$(dirname "$bin_path")/../bin/git-sync-all"
+    # Use GSA_SCRIPT_DIR (set by bin/git-sync-all) for correct path
+    # in both dev layout (lib/../bin/) and installed layout (~/.local/bin/)
+    bin_path="${GSA_SCRIPT_DIR}/bin/git-sync-all"
     bin_path="$(readlink -f "$bin_path")"
 
     # Git alias: git check
