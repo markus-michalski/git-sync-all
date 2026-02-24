@@ -130,9 +130,13 @@ echo "-- no config file (defaults only) --"
 
 unset SYNC_BASE_DIRS SYNC_SCAN_DEPTH SYNC_PULL_STRATEGY SYNC_VERBOSITY 2>/dev/null || true
 
-# Use a non-existent config path
+# Override default base dir with a real tmp dir so validate_config() passes on CI
+# ($HOME/projekte may not exist on GitHub Actions runner)
+_defaults_test_dir=$(mktemp -d)
+SYNC_BASE_DIRS="$_defaults_test_dir"
 load_config "/tmp/nonexistent-config-file-$(date +%s).conf"
-assert_eq "$HOME/projekte" "$SYNC_BASE_DIRS" "defaults work without config file" || true
+assert_eq "$_defaults_test_dir" "$SYNC_BASE_DIRS" "defaults work without config file" || true
+rm -rf "$_defaults_test_dir"
 
 # ── Cleanup ──────────────────────────────────────────────────────────────────
 cleanup_all
