@@ -1,14 +1,15 @@
 PREFIX ?= /usr/local
 BINDIR ?= $(PREFIX)/bin
 LIBDIR ?= $(PREFIX)/lib/git-sync-all
+SRCDIR := $(shell cd "$(dir $(lastword $(MAKEFILE_LIST)))" && pwd)
 
-.PHONY: install uninstall test lint format format-fix check help
+.PHONY: install uninstall link unlink test lint format format-fix check help
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-install: ## Install to $(PREFIX) (default: /usr/local)
+install: ## Install (copy) to $(PREFIX) (default: /usr/local)
 	@echo "Installing git-sync-all to $(BINDIR)..."
 	install -d $(DESTDIR)$(BINDIR)
 	install -d $(DESTDIR)$(LIBDIR)
@@ -18,10 +19,19 @@ install: ## Install to $(PREFIX) (default: /usr/local)
 		$(DESTDIR)$(BINDIR)/git-sync-all
 	@echo "Installed successfully. Run: git-sync-all --help"
 
-uninstall: ## Remove installation
+uninstall: ## Remove installation (copies or symlinks)
 	rm -f $(DESTDIR)$(BINDIR)/git-sync-all
 	rm -rf $(DESTDIR)$(LIBDIR)
 	@echo "Uninstalled git-sync-all"
+
+link: ## Symlink to $(PREFIX) (auto-updates on git pull)
+	@echo "Linking git-sync-all to $(BINDIR)..."
+	@mkdir -p $(DESTDIR)$(BINDIR)
+	@ln -sf $(SRCDIR)/bin/git-sync-all $(DESTDIR)$(BINDIR)/git-sync-all
+	@echo "Linked $(DESTDIR)$(BINDIR)/git-sync-all -> $(SRCDIR)/bin/git-sync-all"
+	@echo "Done. Updates via git pull take effect immediately."
+
+unlink: uninstall ## Remove symlink (alias for uninstall)
 
 test: ## Run all tests
 	@bash tests/run-tests.sh

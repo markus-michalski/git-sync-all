@@ -9,7 +9,7 @@ Built for developers who work on multiple machines and want one command to keep 
 ```bash
 git clone https://github.com/markus-michalski/git-sync-all.git
 cd git-sync-all
-sudo make install
+make link PREFIX=$HOME/.local   # symlink, auto-updates on git pull
 git-sync-all                    # sync ~/projekte
 ```
 
@@ -80,27 +80,25 @@ git-sync-all -v
 
 ## Installation
 
-### From Source (recommended)
+### Symlink (recommended)
 
 ```bash
 git clone https://github.com/markus-michalski/git-sync-all.git
 cd git-sync-all
-sudo make install          # installs to /usr/local/bin
+make link PREFIX=$HOME/.local   # symlink, auto-updates on git pull
 ```
 
-### User-local (no sudo)
+### System-wide copy
+
+```bash
+sudo make install               # copies to /usr/local/bin
+```
+
+### User-local copy (no sudo)
 
 ```bash
 make install PREFIX=$HOME/.local
 # Ensure ~/.local/bin is in your PATH
-```
-
-### Direct Usage (no install)
-
-```bash
-git clone https://github.com/markus-michalski/git-sync-all.git
-# Symlink to PATH
-ln -s ~/git-sync-all/bin/git-sync-all ~/.local/bin/git-sync-all
 ```
 
 ### Git Alias
@@ -113,6 +111,8 @@ git-sync-all --setup-alias
 ### Uninstall
 
 ```bash
+make uninstall PREFIX=$HOME/.local   # removes symlink or copy
+# or for system-wide:
 sudo make uninstall
 ```
 
