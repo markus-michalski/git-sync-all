@@ -58,6 +58,31 @@ _build_commit_msg() {
     echo "$msg"
 }
 
+# ── Ask for Commit Message ───────────────────────────────────────────────────
+# Prompts user for a custom commit message, falls back to default if empty.
+# In auto-confirm or non-interactive mode, returns the default message.
+_ask_commit_msg() {
+    local default_msg
+    default_msg="$(_build_commit_msg)"
+
+    # Auto-confirm or non-interactive: use default
+    if [[ "${SYNC_AUTO_CONFIRM:-false}" == "true" ]] || [[ ! -t 0 ]]; then
+        echo "$default_msg"
+        return 0
+    fi
+
+    echo -e "  ${BLUE}Default message:${NC} ${default_msg}" >&2
+    echo -e -n "  ${YELLOW}Commit message (Enter = default): ${NC}" >&2
+    local user_msg
+    read -r user_msg </dev/tty
+
+    if [[ -z "$user_msg" ]]; then
+        echo "$default_msg"
+    else
+        echo "$user_msg"
+    fi
+}
+
 # ── Sync Single Repository ──────────────────────────────────────────────────
 # Prints result to stdout: clean, synced, skipped, failed
 sync_repository() {
@@ -92,7 +117,7 @@ sync_repository() {
         fi
 
         local commit_msg
-        commit_msg="$(_build_commit_msg)"
+        commit_msg="$(_ask_commit_msg)"
 
         log_info "  Committing changes..."
         if commit_changes "$repo_path" "$commit_msg" "${SYNC_COMMIT_BODY:-}"; then
