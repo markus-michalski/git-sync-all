@@ -150,10 +150,49 @@ _create_mock_repo() {
         no-remote)
             git -C "$path" remote remove origin
             ;;
+        conflict)
+            # Remote changes same file as local dirty changes
+            _push_remote_change "$bare_remote" "README.md" "remote change to README" "remote: modify README"
+            echo "local change to README" >>"$path/README.md"
+            ;;
+        remote-ahead)
+            # Remote has new commits, local is clean
+            _push_remote_change "$bare_remote" "remote-new.txt" "new file from remote" "remote: add new file"
+            ;;
+        dirty-remote-safe)
+            # Both sides have changes but on different files (no conflict)
+            _push_remote_change "$bare_remote" "remote-file.txt" "remote only content" "remote: add remote file"
+            echo "local only content" >"$path/local-file.txt"
+            ;;
         clean)
             # Already clean
             ;;
     esac
+}
+
+# Helper: Push a change to the remote via a temporary clone
+_push_remote_change() {
+    local bare_remote="$1"
+    local filename="$2"
+    local content="$3"
+    local commit_msg="${4:-remote: test change}"
+
+    local tmp_clone
+    tmp_clone=$(mktemp -d)
+
+    git clone --quiet "$bare_remote" "$tmp_clone"
+    git -C "$tmp_clone" config user.email "test@test.com"
+    git -C "$tmp_clone" config user.name "Remote User"
+
+    echo "$content" >"$tmp_clone/$filename"
+    git -C "$tmp_clone" add -A
+    git -C "$tmp_clone" commit -m "$commit_msg" --quiet
+
+    local clone_branch
+    clone_branch=$(git -C "$tmp_clone" rev-parse --abbrev-ref HEAD)
+    git -C "$tmp_clone" push origin "$clone_branch" --quiet 2>/dev/null
+
+    rm -rf "$tmp_clone"
 }
 
 # Create a single mock repo of given type

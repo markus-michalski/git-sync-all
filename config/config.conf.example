@@ -50,6 +50,12 @@ SYNC_TAGS=true
 # Remote name to sync with
 SYNC_REMOTE="origin"
 
+# Conflict strategy for --yes mode when local dirty + remote changes overlap
+# skip:   Skip repos with potential conflicts (safe default)
+# stash:  Stash → pull → stash pop (keeps changes uncommitted)
+# commit: Commit anyway, user resolves conflicts manually
+SYNC_CONFLICT_STRATEGY="skip"
+
 # ── Output ──────────────────────────────────────────────────────────────────
 
 # Color output: auto (default), true, false

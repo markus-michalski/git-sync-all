@@ -194,3 +194,118 @@ sync_tags() {
         git_cmd fetch --tags --prune-tags "$remote" 2>/dev/null
     )
 }
+
+# ── Fetch (without full pull) ────────────────────────────────────────────────
+
+fetch_remote() {
+    local repo_path="$1"
+    local remote="${SYNC_REMOTE:-origin}"
+
+    (
+        cd "$repo_path" || return 1
+        local branch
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        git fetch "$remote" "$branch" --quiet 2>/dev/null
+    )
+}
+
+# Like has_unpulled_commits but without fetching (assumes fetch already done)
+has_unpulled_commits_local() {
+    local repo_path="$1"
+    (
+        cd "$repo_path" || return 1
+        local upstream
+        # shellcheck disable=SC1083
+        upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null) || return 1
+        [[ -z "$upstream" ]] && return 1
+
+        local count
+        count=$(git log "HEAD..${upstream}" --oneline 2>/dev/null | wc -l)
+        [[ "$count" -gt 0 ]]
+    )
+}
+
+# ── Conflict Detection ───────────────────────────────────────────────────────
+
+# List locally modified files (uncommitted changes)
+get_local_dirty_files() {
+    local repo_path="$1"
+    (
+        cd "$repo_path" || return 1
+        git status --porcelain 2>/dev/null | sed 's/^...//' | sed 's/.* -> //'
+    )
+}
+
+# List files changed on remote since HEAD (requires prior fetch)
+get_remote_changed_files() {
+    local repo_path="$1"
+    (
+        cd "$repo_path" || return 1
+        local upstream
+        # shellcheck disable=SC1083
+        upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null) || return 1
+        git diff --name-only "HEAD..${upstream}" 2>/dev/null
+    )
+}
+
+# Find files changed both locally and on remote (potential merge conflicts)
+# Outputs conflicting filenames (one per line), empty if none
+detect_potential_conflicts() {
+    local repo_path="$1"
+    local local_files remote_files
+    local_files=$(get_local_dirty_files "$repo_path")
+    remote_files=$(get_remote_changed_files "$repo_path")
+
+    # No conflicts if either side has no changes
+    [[ -z "$local_files" ]] && return 0
+    [[ -z "$remote_files" ]] && return 0
+
+    comm -12 <(echo "$local_files" | sort -u) <(echo "$remote_files" | sort -u)
+}
+
+# ── Recovery Operations ──────────────────────────────────────────────────────
+
+is_rebase_in_progress() {
+    local repo_path="$1"
+    [[ -d "$repo_path/.git/rebase-merge" ]] || [[ -d "$repo_path/.git/rebase-apply" ]]
+}
+
+abort_rebase() {
+    local repo_path="$1"
+    (
+        cd "$repo_path" || return 1
+        git_cmd rebase --abort
+    )
+}
+
+is_merge_in_progress() {
+    local repo_path="$1"
+    [[ -f "$repo_path/.git/MERGE_HEAD" ]]
+}
+
+abort_merge() {
+    local repo_path="$1"
+    (
+        cd "$repo_path" || return 1
+        git_cmd merge --abort
+    )
+}
+
+# ── Stash Operations ─────────────────────────────────────────────────────────
+
+stash_changes() {
+    local repo_path="$1"
+    local msg="${2:-git-sync-all: auto-stash}"
+    (
+        cd "$repo_path" || return 1
+        git_cmd stash push --include-untracked -m "$msg"
+    )
+}
+
+stash_pop() {
+    local repo_path="$1"
+    (
+        cd "$repo_path" || return 1
+        git_cmd stash pop
+    )
+}

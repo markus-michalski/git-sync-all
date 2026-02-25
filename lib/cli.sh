@@ -86,6 +86,11 @@ parse_args() {
                 SYNC_COLOR=false
                 shift
                 ;;
+            --conflict-strategy)
+                [[ -z "${2:-}" ]] && die "--conflict-strategy requires a value (skip, stash, commit)"
+                SYNC_CONFLICT_STRATEGY="$2"
+                shift 2
+                ;;
             --status)
                 STATUS_ONLY=true
                 shift
@@ -171,6 +176,7 @@ ${YELLOW:-}OPTIONS${NC:-}
     --no-commit          Skip auto-committing (only pull/push)
     --no-color           Disable colored output
 
+    --conflict-strategy  Conflict handling: skip (default), stash, commit
     --status             Show repo status only (no sync actions)
     --exclude PATTERN    Exclude repos matching pattern (repeatable)
     --include PATTERN    Only sync repos matching pattern (repeatable)

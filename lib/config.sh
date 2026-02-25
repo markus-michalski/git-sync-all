@@ -24,6 +24,7 @@ _set_defaults() {
     SYNC_REMOTE="${SYNC_REMOTE:-origin}"
     SYNC_COLOR="${SYNC_COLOR:-auto}"
     SYNC_VERBOSITY="${SYNC_VERBOSITY:-1}"
+    SYNC_CONFLICT_STRATEGY="${SYNC_CONFLICT_STRATEGY:-skip}"
 }
 
 # ── Config File Resolution ───────────────────────────────────────────────────
@@ -82,6 +83,12 @@ validate_config() {
     if [[ ! "$SYNC_SCAN_DEPTH" =~ ^[0-9]+$ ]] || [[ "$SYNC_SCAN_DEPTH" -lt 1 ]]; then
         die "Config error: SYNC_SCAN_DEPTH must be a positive integer (got: $SYNC_SCAN_DEPTH)"
     fi
+
+    # Validate conflict strategy
+    case "${SYNC_CONFLICT_STRATEGY:-skip}" in
+        skip | stash | commit) ;;
+        *) die "Config error: SYNC_CONFLICT_STRATEGY must be 'skip', 'stash', or 'commit' (got: $SYNC_CONFLICT_STRATEGY)" ;;
+    esac
 
     log_debug "Config validated"
 }
