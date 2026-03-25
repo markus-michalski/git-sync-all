@@ -8,21 +8,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-
 - Nothing yet
 
 ### Changed
+- Nothing yet
 
+### Deprecated
+- Nothing yet
+
+### Removed
 - Nothing yet
 
 ### Fixed
-
 - Nothing yet
+
+### Security
+- Nothing yet
+
+## [1.1.0] - 2026-03-25
+
+### Added
+- add YAML-based repository inventory with --verify mode
+- add conflict detection, stash workflow, and automatic recovery
+
+### Changed
+- add inventory and --verify documentation to README
+
+### Fixed
+- help text shows raw escape codes instead of colors
 
 ## [1.0.0] - 2026-02-24
 
 ### Added
-
 - Core sync workflow: commit, pull (rebase/merge), push, tag sync
 - XDG-compliant configuration file (`~/.config/git-sync-all/config.conf`)
 - CLI flags: `--dry-run`, `--status`, `--yes`, `--verbose`, `--quiet`
@@ -36,5 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Makefile with install/uninstall/test/lint/format targets
 - GitHub Actions CI pipeline
 
-[Unreleased]: https://github.com/markus-michalski/git-sync-all/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/markus-michalski/git-sync-all/compare/v1.1.0...HEAD
 [1.0.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.0.0
+[1.1.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.1.0
