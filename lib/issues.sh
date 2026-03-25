@@ -113,7 +113,7 @@ show_issues() {
             if [[ "${SYNC_VERBOSITY:-1}" -ge 2 ]]; then
                 while IFS=$'\t' read -r num title; do
                     printf '  %b#%-6s%b %s\n' "${CYAN:-}" "$num" "${NC:-}" "$title" >&2
-                done <<< "$issues_output"
+                done <<<"$issues_output"
             fi
         else
             printf '%-35s %b%s%b\n' "$repo_name" "${GREEN:-}" "--" "${NC:-}" >&2
