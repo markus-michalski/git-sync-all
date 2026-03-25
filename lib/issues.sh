@@ -68,8 +68,8 @@ show_issues() {
     local skipped=0
 
     # Table header
-    printf "${BOLD:-}%-35s %s${NC:-}\n" "REPOSITORY" "OPEN ISSUES" >&2
-    printf "%s\n" "$(printf -- '-%.0s' {1..50})" >&2
+    printf '%b%-35s %s%b\n' "${BOLD:-}" "REPOSITORY" "OPEN ISSUES" "${NC:-}" >&2
+    printf '%s\n' "$(printf -- '-%.0s' {1..50})" >&2
 
     local repo_name
     for repo_name in "${_issue_repos[@]}"; do
@@ -78,7 +78,7 @@ show_issues() {
         repo_path=$(_find_repo_path "$repo_name")
 
         if [[ -z "$repo_path" ]]; then
-            printf "%-35s %s\n" "$repo_name" "${YELLOW:-}not found${NC:-}" >&2
+            printf '%-35s %b%s%b\n' "$repo_name" "${YELLOW:-}" "not found" "${NC:-}" >&2
             ((skipped++))
             continue
         fi
@@ -88,7 +88,7 @@ show_issues() {
         gh_repo=$(_get_github_repo "$repo_path") || true
 
         if [[ -z "$gh_repo" ]]; then
-            printf "%-35s %s\n" "$repo_name" "${YELLOW:-}not on GitHub${NC:-}" >&2
+            printf '%-35s %b%s%b\n' "$repo_name" "${YELLOW:-}" "not on GitHub" "${NC:-}" >&2
             ((skipped++))
             continue
         fi
@@ -105,18 +105,18 @@ show_issues() {
         fi
 
         if [[ "$count" -gt 0 ]]; then
-            printf "%-35s ${RED:-}%s${NC:-}\n" "$repo_name" "$count" >&2
+            printf '%-35s %b%s%b\n' "$repo_name" "${RED:-}" "$count" "${NC:-}" >&2
             ((repos_with_issues++))
             ((total_issues += count))
 
             # Verbose: show issue details
             if [[ "${SYNC_VERBOSITY:-1}" -ge 2 ]]; then
                 while IFS=$'\t' read -r num title; do
-                    printf "  ${CYAN:-}#%-6s${NC:-} %s\n" "$num" "$title" >&2
+                    printf '  %b#%-6s%b %s\n' "${CYAN:-}" "$num" "${NC:-}" "$title" >&2
                 done <<< "$issues_output"
             fi
         else
-            printf "%-35s %s\n" "$repo_name" "${GREEN:-}--${NC:-}" >&2
+            printf '%-35s %b%s%b\n' "$repo_name" "${GREEN:-}" "--" "${NC:-}" >&2
         fi
     done
 
