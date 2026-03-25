@@ -19,8 +19,10 @@ NO_PUSH=false
 NO_COMMIT=false
 STATUS_ONLY=false
 VERIFY_MODE=false
+ISSUES_MODE=false
 INVENTORY_FILE=""
 INVENTORY_GROUP=""
+_CLI_VERBOSITY=""
 declare -a _CLI_EXCLUDES=()
 declare -a _CLI_INCLUDES=()
 declare -a _CLI_DIRS=()
@@ -43,10 +45,12 @@ parse_args() {
                 ;;
             -v | --verbose)
                 SYNC_VERBOSITY=$((${SYNC_VERBOSITY:-1} + 1))
+                _CLI_VERBOSITY="$SYNC_VERBOSITY"
                 shift
                 ;;
             -q | --quiet)
                 SYNC_VERBOSITY=0
+                _CLI_VERBOSITY="0"
                 shift
                 ;;
             -y | --yes)
@@ -100,6 +104,10 @@ parse_args() {
                 ;;
             --verify)
                 VERIFY_MODE=true
+                shift
+                ;;
+            --issues)
+                ISSUES_MODE=true
                 shift
                 ;;
             --inventory)
@@ -163,6 +171,9 @@ apply_cli_overrides() {
             echo "${_CLI_DIRS[*]}"
         )"
     fi
+    if [[ -n "$_CLI_VERBOSITY" ]]; then
+        SYNC_VERBOSITY="$_CLI_VERBOSITY"
+    fi
 }
 
 # ── Help Text ────────────────────────────────────────────────────────────────
@@ -203,8 +214,9 @@ ${YELLOW:-}OPTIONS${NC:-}
     --conflict-strategy  Conflict handling: skip (default), stash, commit
     --status             Show repo status only (no sync actions)
     --verify             Verify all repos from inventory exist locally
+    --issues             Show open GitHub issues for inventory repos
     --inventory FILE     Use specific inventory file (default: XDG config)
-    --group NAME         Verify only repos in this group (default: all)
+    --group NAME         Filter inventory by group (default: all)
     --init-inventory     Create inventory file at XDG location
     --exclude PATTERN    Exclude repos matching pattern (repeatable)
     --include PATTERN    Only sync repos matching pattern (repeatable)
@@ -227,6 +239,8 @@ ${YELLOW:-}EXAMPLES${NC:-}
     git-sync-all --no-commit --no-push    # Only pull from remote
     git-sync-all --verify                 # Check all inventory repos exist
     git-sync-all --verify --group work    # Check only "work" group repos
+    git-sync-all --issues                 # Show open issues for all inventory repos
+    git-sync-all --issues --group public  # Show open issues for "public" group only
 
 ${YELLOW:-}EXIT CODES${NC:-}
     0    All repositories synced successfully
