@@ -167,7 +167,9 @@ apply_cli_overrides() {
 
 # ── Help Text ────────────────────────────────────────────────────────────────
 show_help() {
-    cat <<EOF
+    # Use printf '%b' to interpret \033 escape sequences in color variables,
+    # since --help runs before setup_colors() and cat does not interpret them.
+    printf '%b\n' "\
 ${BOLD:-}git-sync-all${NC:-} - Sync all Git repositories in a directory tree
 
 ${YELLOW:-}USAGE${NC:-}
@@ -229,8 +231,7 @@ ${YELLOW:-}EXAMPLES${NC:-}
 ${YELLOW:-}EXIT CODES${NC:-}
     0    All repositories synced successfully
     1    One or more repositories failed to sync
-
-EOF
+"
 }
 
 # ── Version ──────────────────────────────────────────────────────────────────
