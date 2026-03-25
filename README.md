@@ -52,6 +52,12 @@ git-sync-all --no-pull
 # Skip commit (only pull + push existing)
 git-sync-all --no-commit
 
+# Verify all expected repos exist locally
+git-sync-all --verify
+
+# Verify only a specific group
+git-sync-all --verify --group work
+
 # Verbose output
 git-sync-all -v
 ```
@@ -74,6 +80,10 @@ git-sync-all -v
 --no-commit          Skip auto-committing
 --no-color           Disable colored output
 --status             Show repo status only (no sync actions)
+--verify             Verify all repos from inventory exist locally
+--inventory FILE     Use specific inventory file
+--group NAME         Verify only repos in this group (default: all)
+--init-inventory     Create inventory file at XDG location
 --exclude PATTERN    Exclude repos matching pattern (repeatable)
 --include PATTERN    Only sync repos matching pattern (repeatable)
 ```
@@ -137,10 +147,45 @@ See [config.conf.example](config/config.conf.example) for all options.
 | `SYNC_AUTO_CONFIRM` | `false` | Skip confirmation prompts |
 | `SYNC_COMMIT_MSG` | `chore: auto-sync from {hostname}` | Commit message template |
 | `SYNC_REMOTE` | `origin` | Remote name |
+| `SYNC_INVENTORY_FILE` | (XDG default) | Path to `repos.yml` inventory file |
 
 ### Priority
 
 CLI flags > Environment variables > Config file > Built-in defaults
+
+## Repository Inventory
+
+Keep track of which repos should be cloned on each machine using a `repos.yml` inventory file.
+
+```bash
+git-sync-all --init-inventory
+# Creates ~/.config/git-sync-all/repos.yml
+```
+
+See [repos.yml.example](config/repos.yml.example) for the format. Repos are organized in groups:
+
+```yaml
+all:
+  - git-sync-all
+  - dotfiles
+
+work:
+  - shopware6-sepa-67
+  - oxid-module-gallery
+
+personal:
+  - my-website
+```
+
+Verify that all expected repos exist locally:
+
+```bash
+git-sync-all --verify                   # check "all" group
+git-sync-all --verify --group work      # check "work" group only
+git-sync-all --verify --group all,work  # check multiple groups
+```
+
+Missing repos are listed with their names so you can clone them.
 
 ## Multi-Machine Workflow
 
@@ -151,7 +196,8 @@ git-sync-all    # commits and pushes everything
 
 **Arriving at home:**
 ```bash
-git-sync-all    # pulls all changes from work
+git-sync-all --verify   # check all expected repos are cloned
+git-sync-all            # pulls all changes from work
 ```
 
 **Next day at work:**
