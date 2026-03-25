@@ -31,7 +31,7 @@ readonly GSA_SCRIPT_DIR
 readonly GSA_LIB_DIR="${GSA_SCRIPT_DIR}/lib"
 
 # Source all libraries
-for _gsa_lib in core config cli repo-discovery git-ops sync inventory; do
+for _gsa_lib in core config cli repo-discovery git-ops sync inventory issues; do
     # shellcheck source=/dev/null
     source "${GSA_LIB_DIR}/${_gsa_lib}.sh"
 done
@@ -80,6 +80,35 @@ main() {
         local verify_missing
         verify_missing=$(echo "$verify_stats" | cut -d: -f3)
         [[ "$verify_missing" -gt 0 ]] && exit 1
+        exit 0
+    fi
+
+    # 7. Handle issues mode
+    if [[ "${ISSUES_MODE:-false}" == "true" ]]; then
+        local inv_file="${INVENTORY_FILE:-${SYNC_INVENTORY_FILE:-}}"
+        [[ -z "$inv_file" ]] && inv_file="$(_resolve_inventory_path)"
+
+        local group="${INVENTORY_GROUP:-all}"
+
+        log_info "Checking open issues"
+        log_info "Inventory: ${inv_file}"
+        log_info "Group: ${group}"
+        echo "" >&2
+
+        local -a inv_repos=()
+        parse_inventory inv_repos "$inv_file" "$group"
+
+        if [[ ${#inv_repos[@]} -eq 0 ]]; then
+            log_warn "No repos found in inventory for group: $group"
+            exit 0
+        fi
+
+        local issue_stats
+        issue_stats=$(show_issues inv_repos)
+
+        local repos_with_issues
+        repos_with_issues=$(echo "$issue_stats" | cut -d: -f2)
+        [[ "$repos_with_issues" -gt 0 ]] && exit 1
         exit 0
     fi
 
