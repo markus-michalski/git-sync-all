@@ -469,8 +469,8 @@ show_status() {
     local -n _repos=$1
 
     # Table header
-    printf "${BOLD}%-35s %-15s %-10s %-10s %-10s${NC}\n" \
-        "REPOSITORY" "BRANCH" "DIRTY" "UNPUSHED" "UNPULLED" >&2
+    printf '%b%-35s %-15s %-10s %-10s %-10s%b\n' "${BOLD}" \
+        "REPOSITORY" "BRANCH" "DIRTY" "UNPUSHED" "UNPULLED" "${NC}" >&2
     printf "%s\n" "$(printf -- '-%.0s' {1..80})" >&2
 
     local total=0 dirty_count=0
