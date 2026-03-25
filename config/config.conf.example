@@ -56,6 +56,12 @@ SYNC_REMOTE="origin"
 # commit: Commit anyway, user resolves conflicts manually
 SYNC_CONFLICT_STRATEGY="skip"
 
+# ── Inventory ────────────────────────────────────────────────────────────────
+
+# Path to repository inventory file (repos.yml)
+# Default: ~/.config/git-sync-all/repos.yml
+# SYNC_INVENTORY_FILE=""
+
 # ── Output ──────────────────────────────────────────────────────────────────
 
 # Color output: auto (default), true, false

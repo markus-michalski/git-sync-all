@@ -31,7 +31,7 @@ readonly GSA_SCRIPT_DIR
 readonly GSA_LIB_DIR="${GSA_SCRIPT_DIR}/lib"
 
 # Source all libraries
-for _gsa_lib in core config cli repo-discovery git-ops sync; do
+for _gsa_lib in core config cli repo-discovery git-ops sync inventory; do
     # shellcheck source=/dev/null
     source "${GSA_LIB_DIR}/${_gsa_lib}.sh"
 done
@@ -53,12 +53,42 @@ main() {
 
     # 5. Print header
     log_info "git-sync-all v${GSA_VERSION}"
+
+    # 6. Handle verify mode
+    if [[ "${VERIFY_MODE:-false}" == "true" ]]; then
+        local inv_file="${INVENTORY_FILE:-${SYNC_INVENTORY_FILE:-}}"
+        [[ -z "$inv_file" ]] && inv_file="$(_resolve_inventory_path)"
+
+        local group="${INVENTORY_GROUP:-all}"
+
+        log_info "Verifying inventory: ${inv_file}"
+        log_info "Group: ${group}"
+        log_info "Scanning: ${SYNC_BASE_DIRS//:/, }"
+        echo "" >&2
+
+        local -a inv_repos=()
+        parse_inventory inv_repos "$inv_file" "$group"
+
+        if [[ ${#inv_repos[@]} -eq 0 ]]; then
+            log_warn "No repos found in inventory for group: $group"
+            exit 0
+        fi
+
+        local verify_stats
+        verify_stats=$(verify_inventory inv_repos)
+
+        local verify_missing
+        verify_missing=$(echo "$verify_stats" | cut -d: -f3)
+        [[ "$verify_missing" -gt 0 ]] && exit 1
+        exit 0
+    fi
+
     log_info "Scanning: ${SYNC_BASE_DIRS//:/, }"
     log_debug "Hostname: $(hostname)"
     [[ "${DRY_RUN:-false}" == "true" ]] && log_warn "DRY-RUN mode (no changes will be made)"
     echo "" >&2
 
-    # 6. Discover repositories
+    # 7. Discover repositories
     local -a repos=()
     discover_repos repos
 
@@ -69,7 +99,7 @@ main() {
 
     echo "" >&2
 
-    # 7. Run sync or status-only
+    # 8. Run sync or status-only
     local stats
     if [[ "${STATUS_ONLY:-false}" == "true" ]]; then
         stats=$(show_status repos)
@@ -77,10 +107,10 @@ main() {
         stats=$(sync_all repos)
     fi
 
-    # 8. Print summary
+    # 9. Print summary
     print_summary "$stats"
 
-    # 9. Exit code based on failures
+    # 10. Exit code based on failures
     local failed
     failed=$(echo "$stats" | cut -d: -f5)
     [[ "$failed" -gt 0 ]] && exit 1
