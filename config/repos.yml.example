@@ -1,0 +1,26 @@
+# git-sync-all repository inventory
+# Copy to ~/.config/git-sync-all/repos.yml
+#
+# Lists repositories that SHOULD exist on this machine.
+# Used with: git-sync-all --verify
+#
+# Format: Simple YAML with named groups.
+# Each group contains a list of repository directory names.
+# Groups are optional — use "all" for a flat list.
+
+# Repositories expected on all machines
+all:
+  - git-sync-all
+  - dotfiles
+  - script_collection
+
+# Work-specific repositories (use --group work to verify)
+work:
+  - shopware6-sepa-67
+  - shopware6-facebook-pixel-67
+  - oxid-module-gallery
+
+# Personal projects
+personal:
+  - my-website
+  - notes

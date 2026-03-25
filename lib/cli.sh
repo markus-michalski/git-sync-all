@@ -18,6 +18,9 @@ NO_PULL=false
 NO_PUSH=false
 NO_COMMIT=false
 STATUS_ONLY=false
+VERIFY_MODE=false
+INVENTORY_FILE=""
+INVENTORY_GROUP=""
 declare -a _CLI_EXCLUDES=()
 declare -a _CLI_INCLUDES=()
 declare -a _CLI_DIRS=()
@@ -94,6 +97,25 @@ parse_args() {
             --status)
                 STATUS_ONLY=true
                 shift
+                ;;
+            --verify)
+                VERIFY_MODE=true
+                shift
+                ;;
+            --inventory)
+                [[ -z "${2:-}" ]] && die "--inventory requires a file path"
+                INVENTORY_FILE="$2"
+                shift 2
+                ;;
+            --group)
+                [[ -z "${2:-}" ]] && die "--group requires a group name"
+                INVENTORY_GROUP="$2"
+                shift 2
+                ;;
+            --init-inventory)
+                _set_defaults 2>/dev/null || true
+                init_inventory
+                exit 0
                 ;;
             --exclude)
                 [[ -z "${2:-}" ]] && die "--exclude requires a pattern"
@@ -178,6 +200,10 @@ ${YELLOW:-}OPTIONS${NC:-}
 
     --conflict-strategy  Conflict handling: skip (default), stash, commit
     --status             Show repo status only (no sync actions)
+    --verify             Verify all repos from inventory exist locally
+    --inventory FILE     Use specific inventory file (default: XDG config)
+    --group NAME         Verify only repos in this group (default: all)
+    --init-inventory     Create inventory file at XDG location
     --exclude PATTERN    Exclude repos matching pattern (repeatable)
     --include PATTERN    Only sync repos matching pattern (repeatable)
 
@@ -197,6 +223,8 @@ ${YELLOW:-}EXAMPLES${NC:-}
     git-sync-all --status                 # Show status table only
     git-sync-all --exclude vendor         # Skip repos named "vendor"
     git-sync-all --no-commit --no-push    # Only pull from remote
+    git-sync-all --verify                 # Check all inventory repos exist
+    git-sync-all --verify --group work    # Check only "work" group repos
 
 ${YELLOW:-}EXIT CODES${NC:-}
     0    All repositories synced successfully
