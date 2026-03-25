@@ -25,6 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Nothing yet
 
+## [1.2.0] - 2026-03-25
+
+### Added
+- add --issues flag to show open GitHub issues per inventory group
+
+### Changed
+- fix shfmt formatting (herestring spacing)
+
+### Fixed
+- raw escape codes in --status table header
+- raw escape codes in --issues output
+
 ## [1.1.0] - 2026-03-25
 
 ### Added
@@ -53,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Makefile with install/uninstall/test/lint/format targets
 - GitHub Actions CI pipeline
 
-[Unreleased]: https://github.com/markus-michalski/git-sync-all/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/markus-michalski/git-sync-all/compare/v1.2.0...HEAD
 [1.0.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.0.0
 [1.1.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.1.0
+[1.2.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.2.0
