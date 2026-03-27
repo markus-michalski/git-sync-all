@@ -81,8 +81,19 @@ main() {
         verify_missing=$(echo "$verify_stats" | cut -d: -f3)
 
         # Check for repos on disk not in inventory
+        # Always use ALL groups for untracked detection, regardless of --group filter
+        local -a all_inv_repos=()
+        local -a all_groups=()
+        mapfile -t all_groups < <(list_inventory_groups "$inv_file")
+        local _g
+        for _g in "${all_groups[@]}"; do
+            local -a _g_repos=()
+            parse_inventory _g_repos "$inv_file" "$_g"
+            all_inv_repos+=("${_g_repos[@]}")
+        done
+
         local -a untracked_repos=()
-        find_untracked_repos untracked_repos inv_repos
+        find_untracked_repos untracked_repos all_inv_repos
 
         if [[ ${#untracked_repos[@]} -gt 0 ]]; then
             local cleanup_stats
