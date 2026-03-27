@@ -14,3 +14,5 @@ disable=SC2312
 disable=SC2310
 # Info: consider adding default case (handled where meaningful)
 disable=SC2249
+# False positive: quotes inside multi-line printf string (SC1078/SC1079/SC2140)
+disable=SC1078,SC1079,SC2140

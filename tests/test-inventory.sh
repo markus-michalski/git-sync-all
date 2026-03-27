@@ -253,6 +253,105 @@ test_verify_empty_list() {
 }
 test_verify_empty_list
 
+# ── Tests: find_untracked_repos ────────────────────────────────────────────
+
+echo ""
+echo "=== find_untracked_repos ==="
+
+test_no_untracked() {
+    local test_dir
+    test_dir=$(mktemp -d)
+    _TEST_DIRS+=("$test_dir")
+
+    # Create repos that ARE in inventory
+    create_single_mock_repo "$test_dir" "repo-alpha"
+    create_single_mock_repo "$test_dir" "repo-beta"
+
+    SYNC_BASE_DIRS="$test_dir"
+    SYNC_SCAN_DEPTH=2
+
+    local -a inv_repos=("repo-alpha" "repo-beta")
+    local -a untracked=()
+    find_untracked_repos untracked inv_repos
+
+    assert_eq "0" "${#untracked[@]}" "no untracked repos when all are in inventory"
+}
+test_no_untracked
+
+test_finds_untracked() {
+    local test_dir
+    test_dir=$(mktemp -d)
+    _TEST_DIRS+=("$test_dir")
+
+    # Create 3 repos, only 1 in inventory
+    create_single_mock_repo "$test_dir" "repo-listed"
+    create_single_mock_repo "$test_dir" "repo-extra-one"
+    create_single_mock_repo "$test_dir" "repo-extra-two"
+
+    SYNC_BASE_DIRS="$test_dir"
+    SYNC_SCAN_DEPTH=2
+
+    local -a inv_repos=("repo-listed")
+    local -a untracked=()
+    find_untracked_repos untracked inv_repos
+
+    assert_eq "2" "${#untracked[@]}" "should find 2 untracked repos"
+}
+test_finds_untracked
+
+test_untracked_empty_inventory() {
+    local test_dir
+    test_dir=$(mktemp -d)
+    _TEST_DIRS+=("$test_dir")
+
+    create_single_mock_repo "$test_dir" "repo-one"
+    create_single_mock_repo "$test_dir" "repo-two"
+
+    SYNC_BASE_DIRS="$test_dir"
+    SYNC_SCAN_DEPTH=2
+
+    local -a inv_repos=()
+    local -a untracked=()
+    find_untracked_repos untracked inv_repos
+
+    assert_eq "2" "${#untracked[@]}" "all repos untracked when inventory is empty"
+}
+test_untracked_empty_inventory
+
+# ── Tests: offer_cleanup_untracked ─────────────────────────────────────────
+
+echo ""
+echo "=== offer_cleanup_untracked ==="
+
+test_cleanup_empty_list() {
+    local -a empty=()
+    local stats
+    stats=$(offer_cleanup_untracked empty 2>/dev/null)
+
+    assert_eq "0:0:0" "$stats" "empty list returns 0:0:0"
+}
+test_cleanup_empty_list
+
+test_cleanup_dry_run() {
+    local test_dir
+    test_dir=$(mktemp -d)
+    _TEST_DIRS+=("$test_dir")
+
+    create_single_mock_repo "$test_dir" "repo-to-keep"
+
+    DRY_RUN=true
+    local -a repos=("$test_dir/repo-to-keep")
+    local stats
+    stats=$(offer_cleanup_untracked repos 2>/dev/null)
+    DRY_RUN=false
+
+    # Dry-run should keep all repos
+    assert_eq "1:0:1" "$stats" "dry-run keeps all repos"
+    assert_eq "true" "$([[ -d "$test_dir/repo-to-keep" ]] && echo true || echo false)" \
+        "repo dir still exists after dry-run"
+}
+test_cleanup_dry_run
+
 # ── Cleanup & Results ───────────────────────────────────────────────────────
 
 cleanup_all

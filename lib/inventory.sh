@@ -154,6 +154,138 @@ verify_inventory() {
     echo "${expected}:${found}:${missing}"
 }
 
+# ── Find Untracked Repos ───────────────────────────────────────────────────
+# Finds repos on disk that are NOT listed in the inventory.
+# Populates the named array reference with paths of untracked repos.
+#
+# Args:
+#   $1 - nameref: output array for untracked repo paths
+#   $2 - nameref: inventory repo names array
+find_untracked_repos() {
+    local -n _untracked_result=$1
+    local -n _inv_repos=$2
+    _untracked_result=()
+
+    # Build lookup of inventory repo names
+    local -A inv_lookup=()
+    local repo
+    for repo in "${_inv_repos[@]}"; do
+        inv_lookup["$repo"]=1
+    done
+
+    # Discover all repos on disk
+    local -A existing_repos=()
+    local IFS=":"
+    local base_dir
+    for base_dir in $SYNC_BASE_DIRS; do
+        local find_depth=$((SYNC_SCAN_DEPTH + 1))
+        while IFS= read -r -d '' git_dir; do
+            local repo_dir
+            repo_dir="$(dirname "$git_dir")"
+            local repo_name
+            repo_name="$(basename "$repo_dir")"
+            existing_repos["$repo_name"]="$repo_dir"
+        done < <(find "$base_dir" -maxdepth "$find_depth" \
+            -type d -name ".git" -print0 2>/dev/null)
+    done
+    unset IFS
+
+    # Find repos on disk not in inventory
+    local name
+    for name in "${!existing_repos[@]}"; do
+        if [[ -z "${inv_lookup[$name]+x}" ]]; then
+            _untracked_result+=("${existing_repos[$name]}")
+        fi
+    done
+
+    log_debug "Found ${#_untracked_result[@]} untracked repos"
+}
+
+# ── Offer Cleanup of Untracked Repos ──────────────────────────────────────
+# Lists untracked repos and asks user whether to remove each one.
+# Always requires explicit confirmation per repo (--yes is ignored for safety).
+#
+# Args:
+#   $1 - nameref: array of untracked repo paths
+#
+# Returns: "total:removed:kept" stats string
+offer_cleanup_untracked() {
+    local -n _cleanup_repos=$1
+    local total=${#_cleanup_repos[@]}
+    local removed=0
+    local kept=0
+
+    if [[ "$total" -eq 0 ]]; then
+        echo "0:0:0"
+        return 0
+    fi
+
+    echo "" >&2
+    log_warn "${total} repo(s) on disk but NOT in inventory:"
+    local path
+    for path in "${_cleanup_repos[@]}"; do
+        echo -e "  ${YELLOW}$(basename "$path")${NC} → ${path}" >&2
+    done
+    echo "" >&2
+
+    # Non-interactive: just report, don't offer deletion
+    if [[ ! -t 0 ]]; then
+        log_info "Non-interactive mode: skipping cleanup prompts"
+        echo "${total}:0:${total}"
+        return 0
+    fi
+
+    for path in "${_cleanup_repos[@]}"; do
+        local name
+        name="$(basename "$path")"
+
+        if [[ "${DRY_RUN:-false}" == "true" ]]; then
+            log_dry "Would ask to remove: ${name} (${path})"
+            ((kept++))
+            continue
+        fi
+
+        local response
+        while true; do
+            echo -e -n "${YELLOW}Remove ${BOLD}${name}${NC}${YELLOW} from disk? (${path}) [y/n/q]: ${NC}" >&2
+            read -r response </dev/tty
+
+            case "${response,,}" in
+                y | yes)
+                    rm -rf "$path"
+                    log_ok "  Removed: ${name}"
+                    ((removed++))
+                    break
+                    ;;
+                n | no)
+                    log_info "  Kept: ${name}"
+                    ((kept++))
+                    break
+                    ;;
+                q | quit)
+                    echo "" >&2
+                    log_warn "Cleanup aborted by user"
+                    ((kept += total - removed - kept))
+                    echo "${total}:${removed}:${kept}"
+                    return 0
+                    ;;
+                *)
+                    echo -e "${RED}Invalid input. Use 'y' (yes), 'n' (no) or 'q' (quit).${NC}" >&2
+                    ;;
+            esac
+        done
+    done
+
+    echo "" >&2
+    if [[ "$removed" -gt 0 ]]; then
+        log_ok "${removed} repo(s) removed, ${kept} kept"
+    else
+        log_info "No repos removed"
+    fi
+
+    echo "${total}:${removed}:${kept}"
+}
+
 # ── Init Inventory ──────────────────────────────────────────────────────────
 # Create inventory file from example or generate from discovered repos.
 init_inventory() {

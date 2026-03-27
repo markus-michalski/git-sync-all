@@ -213,7 +213,7 @@ ${YELLOW:-}OPTIONS${NC:-}
 
     --conflict-strategy  Conflict handling: skip (default), stash, commit
     --status             Show repo status only (no sync actions)
-    --verify             Verify all repos from inventory exist locally
+    --verify             Verify inventory: find missing & untracked repos
     --issues             Show open GitHub issues for inventory repos
     --inventory FILE     Use specific inventory file (default: XDG config)
     --group NAME         Filter inventory by group (default: all)
@@ -237,8 +237,9 @@ ${YELLOW:-}EXAMPLES${NC:-}
     git-sync-all --status                 # Show status table only
     git-sync-all --exclude vendor         # Skip repos named "vendor"
     git-sync-all --no-commit --no-push    # Only pull from remote
-    git-sync-all --verify                 # Check all inventory repos exist
+    git-sync-all --verify                 # Check missing & untracked repos
     git-sync-all --verify --group work    # Check only "work" group repos
+    git-sync-all --verify --dry-run       # Preview without deleting anything
     git-sync-all --issues                 # Show open issues for all inventory repos
     git-sync-all --issues --group public  # Show open issues for "public" group only
 
