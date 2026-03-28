@@ -7,6 +7,14 @@
 # Format: Simple YAML with named groups.
 # Each group contains a list of repository directory names.
 # Groups are optional — use "all" for a flat list.
+#
+# Two entry formats are supported:
+#   - reponame                              # your own GitHub repo
+#   - reponame: https://github.com/org/repo # external repo with clone URL
+#
+# When --verify finds missing repos:
+#   - With URL:    shows "git clone <url>"
+#   - Without URL: shows "gh repo clone <user>/<name>"
 
 # Repositories expected on all machines
 all:
@@ -19,6 +27,11 @@ work:
   - shopware6-sepa-67
   - shopware6-facebook-pixel-67
   - oxid-module-gallery
+
+# External/third-party repositories (with clone URLs)
+external:
+  - osticket: https://github.com/osTicket/osTicket
+  - oxid7: https://github.com/OXID-eSales/oxideshop_ce
 
 # Personal projects
 personal:

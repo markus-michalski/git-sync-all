@@ -10,6 +10,9 @@
 [[ -n "${_GSA_INVENTORY_LOADED:-}" ]] && return 0
 _GSA_INVENTORY_LOADED=1
 
+# Global associative array: repo name → clone URL (populated by parse_inventory)
+declare -gA _GSA_REPO_URLS=()
+
 # ── Inventory File Resolution ────────────────────────────────────────────────
 _resolve_inventory_path() {
     echo "${XDG_CONFIG_HOME:-$HOME/.config}/git-sync-all/repos.yml"
@@ -58,16 +61,30 @@ parse_inventory() {
             continue
         fi
 
-        # List item: "  - reponame"
+        # List item: "  - reponame" or "  - reponame: https://clone-url"
         if [[ "$line" =~ ^[[:space:]]*-[[:space:]]+(.+)$ ]]; then
-            local repo_name="${BASH_REMATCH[1]}"
-            # Trim trailing whitespace
-            repo_name="${repo_name%% }"
-            repo_name="${repo_name%%$'\r'}"
+            local raw_entry="${BASH_REMATCH[1]}"
+            # Trim trailing whitespace and carriage returns
+            raw_entry="${raw_entry%% }"
+            raw_entry="${raw_entry%%$'\r'}"
+
+            local repo_name=""
+            local clone_url=""
+
+            # Check for key-value format: "name: https://..."
+            if [[ "$raw_entry" =~ ^([a-zA-Z0-9._-]+):[[:space:]]+(https?://.+)$ ]]; then
+                repo_name="${BASH_REMATCH[1]}"
+                clone_url="${BASH_REMATCH[2]}"
+            else
+                repo_name="$raw_entry"
+            fi
 
             # Check if current group matches filter
             if [[ -n "$current_group" ]] && [[ -n "${group_filter[$current_group]+x}" ]]; then
                 _inv_result+=("$repo_name")
+                if [[ -n "$clone_url" ]]; then
+                    _GSA_REPO_URLS["$repo_name"]="$clone_url"
+                fi
             fi
         fi
     done <"$inv_file"
@@ -90,6 +107,27 @@ list_inventory_groups() {
             echo "${BASH_REMATCH[1]}"
         fi
     done <"$inv_file"
+}
+
+# ── Get GitHub Username ─────────────────────────────────────────────────────
+# Resolves the GitHub username for clone hints.
+# Priority: SYNC_GITHUB_USER env/config > gh CLI > empty string
+_get_github_username() {
+    if [[ -n "${SYNC_GITHUB_USER:-}" ]]; then
+        echo "$SYNC_GITHUB_USER"
+        return 0
+    fi
+
+    if command -v gh &>/dev/null && gh auth status &>/dev/null 2>&1; then
+        local user
+        user=$(gh api user -q .login 2>/dev/null) || true
+        if [[ -n "$user" ]]; then
+            echo "$user"
+            return 0
+        fi
+    fi
+
+    echo ""
 }
 
 # ── Verify Repos Exist ──────────────────────────────────────────────────────
@@ -142,13 +180,35 @@ verify_inventory() {
     else
         log_warn "${found}/${expected} found, ${missing} missing"
         echo "" >&2
+
+        # Resolve GitHub username once for clone hints
+        local gh_user=""
+        gh_user=$(_get_github_username)
+
+        local first_base_dir="${SYNC_BASE_DIRS%%:*}"
+
         log_info "Missing repositories:"
         local m
         for m in "${missing_repos[@]}"; do
-            echo -e "  ${RED}${m}${NC}" >&2
+            if [[ -n "${_GSA_REPO_URLS[$m]+x}" ]]; then
+                # Repo has explicit clone URL
+                echo -e "  ${RED}${m}${NC}" >&2
+                echo -e "    git clone ${_GSA_REPO_URLS[$m]} ${first_base_dir}/${m}" >&2
+            elif [[ -n "$gh_user" ]]; then
+                # No URL → assume GitHub repo owned by user
+                echo -e "  ${RED}${m}${NC}" >&2
+                echo -e "    gh repo clone ${gh_user}/${m} ${first_base_dir}/${m}" >&2
+            else
+                # No URL, no GitHub user → generic hint
+                echo -e "  ${RED}${m}${NC}" >&2
+            fi
         done
         echo "" >&2
-        log_info "Clone missing repos into one of: ${SYNC_BASE_DIRS//:/, }"
+
+        if [[ -z "$gh_user" ]]; then
+            log_info "Clone missing repos into one of: ${SYNC_BASE_DIRS//:/, }"
+        fi
+        log_info "Tip: Add clone URLs in repos.yml for external repos (name: https://...)"
     fi
 
     echo "${expected}:${found}:${missing}"

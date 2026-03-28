@@ -154,6 +154,53 @@ test_missing_file() {
 }
 test_missing_file
 
+# Test: Parse entries with clone URLs (key-value format)
+test_parse_with_urls() {
+    local inv_file
+    inv_file=$(_create_test_inventory "all:
+  - repo-one
+  - repo-two: https://github.com/org/repo-two
+  - repo-three: https://gitlab.com/other/repo-three.git")
+
+    local -a result=()
+    _GSA_REPO_URLS=()
+    parse_inventory result "$inv_file" "all"
+
+    assert_eq "3" "${#result[@]}" "should find 3 repos (plain + URL entries)"
+    assert_eq "repo-one" "${result[0]}" "first repo is plain name"
+    assert_eq "repo-two" "${result[1]}" "second repo is name from key-value"
+    assert_eq "repo-three" "${result[2]}" "third repo is name from key-value"
+
+    assert_eq "https://github.com/org/repo-two" "${_GSA_REPO_URLS[repo-two]}" \
+        "URL stored for repo-two"
+    assert_eq "https://gitlab.com/other/repo-three.git" "${_GSA_REPO_URLS[repo-three]}" \
+        "URL stored for repo-three"
+    assert_eq "" "${_GSA_REPO_URLS[repo-one]:-}" \
+        "no URL stored for plain repo-one"
+}
+test_parse_with_urls
+
+# Test: Mixed plain and URL entries across groups
+test_parse_urls_filtered_by_group() {
+    local inv_file
+    inv_file=$(_create_test_inventory "public:
+  - my-repo
+  - external-repo: https://github.com/other/external-repo
+private:
+  - secret-repo")
+
+    local -a result=()
+    _GSA_REPO_URLS=()
+    parse_inventory result "$inv_file" "public"
+
+    assert_eq "2" "${#result[@]}" "should find 2 repos in public group"
+    assert_eq "my-repo" "${result[0]}" "first is plain repo"
+    assert_eq "external-repo" "${result[1]}" "second is URL repo (name only)"
+    assert_eq "https://github.com/other/external-repo" \
+        "${_GSA_REPO_URLS[external-repo]}" "URL stored for external-repo"
+}
+test_parse_urls_filtered_by_group
+
 # ── Tests: list_inventory_groups ────────────────────────────────────────────
 
 echo ""
@@ -231,6 +278,50 @@ test_verify_with_missing() {
     assert_eq "2" "$miss" "missing count is 2"
 }
 test_verify_with_missing
+
+test_verify_shows_clone_url_hint() {
+    local test_dir
+    test_dir=$(mktemp -d)
+    _TEST_DIRS+=("$test_dir")
+
+    SYNC_BASE_DIRS="$test_dir"
+    SYNC_SCAN_DEPTH=2
+
+    # Set up URL for missing repo
+    _GSA_REPO_URLS=([repo-external]="https://github.com/org/repo-external")
+
+    local -a expected_repos=("repo-external")
+    local output
+    output=$(verify_inventory expected_repos 2>&1 >/dev/null) || true
+
+    assert_contains "$output" "git clone https://github.com/org/repo-external" \
+        "should show git clone with URL for missing repo"
+}
+test_verify_shows_clone_url_hint
+
+test_verify_shows_gh_clone_hint() {
+    local test_dir
+    test_dir=$(mktemp -d)
+    _TEST_DIRS+=("$test_dir")
+
+    SYNC_BASE_DIRS="$test_dir"
+    SYNC_SCAN_DEPTH=2
+
+    # Override _get_github_username to return test user
+    _get_github_username() { echo "testuser"; }
+
+    _GSA_REPO_URLS=()
+    local -a expected_repos=("my-own-repo")
+    local output
+    output=$(verify_inventory expected_repos 2>&1 >/dev/null) || true
+
+    assert_contains "$output" "gh repo clone testuser/my-own-repo" \
+        "should show gh repo clone for repos without URL"
+
+    # Restore original function
+    unset -f _get_github_username
+}
+test_verify_shows_gh_clone_hint
 
 test_verify_empty_list() {
     local test_dir

@@ -177,6 +177,14 @@ personal:
   - my-website
 ```
 
+For third-party repos that are not in your GitHub account, add a clone URL:
+
+```yaml
+external:
+  - osticket: https://github.com/osTicket/osTicket
+  - oxid7: https://github.com/OXID-eSales/oxideshop_ce
+```
+
 Verify that all expected repos exist locally:
 
 ```bash
@@ -185,7 +193,9 @@ git-sync-all --verify --group work      # check "work" group only
 git-sync-all --verify --group all,work  # check multiple groups
 ```
 
-Missing repos are listed with their names so you can clone them.
+Missing repos are listed with clone instructions:
+- Repos with a URL: `git clone <url> <target-dir>`
+- Your own repos: `gh repo clone <user>/<name>` (requires `gh` CLI)
 
 ## Multi-Machine Workflow
 
