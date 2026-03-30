@@ -117,7 +117,11 @@ parse_args() {
                 ;;
             --group)
                 [[ -z "${2:-}" ]] && die "--group requires a group name"
-                INVENTORY_GROUP="$2"
+                if [[ -n "$INVENTORY_GROUP" ]]; then
+                    INVENTORY_GROUP="${INVENTORY_GROUP},${2}"
+                else
+                    INVENTORY_GROUP="$2"
+                fi
                 shift 2
                 ;;
             --init-inventory)
@@ -216,7 +220,7 @@ ${YELLOW:-}OPTIONS${NC:-}
     --verify             Verify inventory: find missing & untracked repos
     --issues             Show open GitHub issues for inventory repos
     --inventory FILE     Use specific inventory file (default: XDG config)
-    --group NAME         Filter inventory by group (default: all)
+    --group NAME         Filter inventory by group (default: all); repeatable for multiple groups
     --init-inventory     Create inventory file at XDG location
     --exclude PATTERN    Exclude repos matching pattern (repeatable)
     --include PATTERN    Only sync repos matching pattern (repeatable)
@@ -239,6 +243,7 @@ ${YELLOW:-}EXAMPLES${NC:-}
     git-sync-all --no-commit --no-push    # Only pull from remote
     git-sync-all --verify                 # Check missing & untracked repos
     git-sync-all --verify --group work    # Check only "work" group repos
+    git-sync-all --verify --group public --group private  # Check multiple groups
     git-sync-all --verify --dry-run       # Preview without deleting anything
     git-sync-all --issues                 # Show open issues for all inventory repos
     git-sync-all --issues --group public  # Show open issues for "public" group only
