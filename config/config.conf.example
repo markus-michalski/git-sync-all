@@ -63,7 +63,8 @@ SYNC_CONFLICT_STRATEGY="skip"
 # SYNC_INVENTORY_FILE=""
 
 # Default group for --verify and --issues when --group is not specified
-# Must match a group name in repos.yml
+# Must match a group name in repos.yml (comma-separated for multiple groups)
+# Example: "all" or "public,private"
 # SYNC_VERIFY_GROUP="all"
 
 # ── Output ──────────────────────────────────────────────────────────────────

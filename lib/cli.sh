@@ -237,6 +237,7 @@ ${YELLOW:-}CONFIGURATION${NC:-}
     Key variables:
       SYNC_BASE_DIRS       Directories to scan (colon-separated)
       SYNC_VERIFY_GROUP    Default group for --verify/--issues (default: all)
+                           Supports comma-separated groups: "public,private"
 
 ${YELLOW:-}EXAMPLES${NC:-}
     git-sync-all                          # Sync all repos in default directory
