@@ -26,6 +26,7 @@ _set_defaults() {
     SYNC_VERBOSITY="${SYNC_VERBOSITY:-1}"
     SYNC_CONFLICT_STRATEGY="${SYNC_CONFLICT_STRATEGY:-skip}"
     SYNC_INVENTORY_FILE="${SYNC_INVENTORY_FILE:-}"
+    SYNC_VERIFY_GROUP="${SYNC_VERIFY_GROUP:-all}"
 }
 
 # ── Config File Resolution ───────────────────────────────────────────────────

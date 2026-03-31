@@ -220,7 +220,8 @@ ${YELLOW:-}OPTIONS${NC:-}
     --verify             Verify inventory: find missing & untracked repos
     --issues             Show open GitHub issues for inventory repos
     --inventory FILE     Use specific inventory file (default: XDG config)
-    --group NAME         Filter inventory by group (default: all); repeatable for multiple groups
+    --group NAME         Filter inventory by group; repeatable for multiple groups
+                         Without --group, falls back to SYNC_VERIFY_GROUP (default: all)
     --init-inventory     Create inventory file at XDG location
     --exclude PATTERN    Exclude repos matching pattern (repeatable)
     --include PATTERN    Only sync repos matching pattern (repeatable)
@@ -232,6 +233,10 @@ ${YELLOW:-}CONFIGURATION${NC:-}
     Create with: git-sync-all --init-config
 
     Priority: CLI flags > Environment variables > Config file > Defaults
+
+    Key variables:
+      SYNC_BASE_DIRS       Directories to scan (colon-separated)
+      SYNC_VERIFY_GROUP    Default group for --verify/--issues (default: all)
 
 ${YELLOW:-}EXAMPLES${NC:-}
     git-sync-all                          # Sync all repos in default directory
