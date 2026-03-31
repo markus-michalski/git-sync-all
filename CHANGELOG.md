@@ -25,6 +25,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Nothing yet
 
+## [1.3.0] - 2026-03-31
+
+### Added
+- update SYNC_VERIFY_GROUP documentation to support multiple groups
+- add SYNC_VERIFY_GROUP config variable for default verify group
+- allow multiple groups in inventory filtering with --group option
+- add clone URL support to repos.yml for external repos
+- detect and offer removal of repos not in inventory
+
+### Fixed
+- add screencasts directory to .gitignore
+- untracked detection uses all groups, not just --group filter
+
 ## [1.2.0] - 2026-03-25
 
 ### Added
@@ -65,7 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Makefile with install/uninstall/test/lint/format targets
 - GitHub Actions CI pipeline
 
-[Unreleased]: https://github.com/markus-michalski/git-sync-all/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/markus-michalski/git-sync-all/compare/v1.3.0...HEAD
 [1.0.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.0.0
 [1.1.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.1.0
 [1.2.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.2.0
+[1.3.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.3.0
