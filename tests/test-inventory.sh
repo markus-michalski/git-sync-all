@@ -443,6 +443,99 @@ test_cleanup_dry_run() {
 }
 test_cleanup_dry_run
 
+# ── Tests: SYNC_VERIFY_GROUP config variable ──────────────────────────────
+
+echo ""
+echo "=== SYNC_VERIFY_GROUP ==="
+
+test_verify_group_default_is_all() {
+    local inv_file
+    inv_file=$(_create_test_inventory "all:
+  - repo-one
+work:
+  - work-repo")
+
+    # Default: SYNC_VERIFY_GROUP should resolve to "all"
+    unset SYNC_VERIFY_GROUP 2>/dev/null || true
+    local group="${INVENTORY_GROUP:-${SYNC_VERIFY_GROUP:-all}}"
+
+    local -a result=()
+    parse_inventory result "$inv_file" "$group"
+
+    assert_eq "1" "${#result[@]}" "default group 'all' should find 1 repo"
+    assert_eq "repo-one" "${result[0]}" "default group returns repo from 'all'"
+}
+test_verify_group_default_is_all
+
+test_verify_group_from_config() {
+    local inv_file
+    inv_file=$(_create_test_inventory "all:
+  - repo-one
+work:
+  - work-repo
+  - office-tool")
+
+    # Simulate config setting
+    SYNC_VERIFY_GROUP="work"
+    INVENTORY_GROUP=""
+    local group="${INVENTORY_GROUP:-${SYNC_VERIFY_GROUP:-all}}"
+
+    local -a result=()
+    parse_inventory result "$inv_file" "$group"
+
+    assert_eq "2" "${#result[@]}" "SYNC_VERIFY_GROUP=work should find 2 repos"
+    assert_eq "work-repo" "${result[0]}" "first repo from work group"
+
+    # Cleanup
+    unset SYNC_VERIFY_GROUP
+}
+test_verify_group_from_config
+
+test_inventory_group_overrides_verify_group() {
+    local inv_file
+    inv_file=$(_create_test_inventory "all:
+  - repo-one
+work:
+  - work-repo
+personal:
+  - my-blog")
+
+    # --group flag (INVENTORY_GROUP) should take priority
+    SYNC_VERIFY_GROUP="work"
+    INVENTORY_GROUP="personal"
+    local group="${INVENTORY_GROUP:-${SYNC_VERIFY_GROUP:-all}}"
+
+    local -a result=()
+    parse_inventory result "$inv_file" "$group"
+
+    assert_eq "1" "${#result[@]}" "--group should override SYNC_VERIFY_GROUP"
+    assert_eq "my-blog" "${result[0]}" "--group=personal returns personal repos"
+
+    # Cleanup
+    unset SYNC_VERIFY_GROUP
+    INVENTORY_GROUP=""
+}
+test_inventory_group_overrides_verify_group
+
+test_nonexistent_group_returns_empty() {
+    local inv_file
+    inv_file=$(_create_test_inventory "work:
+  - work-repo
+personal:
+  - my-blog")
+
+    # No "all" group exists — default should return 0 repos
+    unset SYNC_VERIFY_GROUP 2>/dev/null || true
+    INVENTORY_GROUP=""
+    local group="${INVENTORY_GROUP:-${SYNC_VERIFY_GROUP:-all}}"
+
+    local -a result=()
+    parse_inventory result "$inv_file" "$group"
+
+    assert_eq "0" "${#result[@]}" "non-existent default group 'all' returns 0 repos"
+}
+test_nonexistent_group_returns_empty
+
 # ── Cleanup & Results ───────────────────────────────────────────────────────
 
 cleanup_all

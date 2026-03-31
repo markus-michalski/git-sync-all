@@ -62,6 +62,11 @@ SYNC_CONFLICT_STRATEGY="skip"
 # Default: ~/.config/git-sync-all/repos.yml
 # SYNC_INVENTORY_FILE=""
 
+# Default group for --verify and --issues when --group is not specified
+# Must match a group name in repos.yml (comma-separated for multiple groups)
+# Example: "all" or "public,private"
+# SYNC_VERIFY_GROUP="all"
+
 # ── Output ──────────────────────────────────────────────────────────────────
 
 # Color output: auto (default), true, false

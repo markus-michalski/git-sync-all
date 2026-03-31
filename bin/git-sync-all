@@ -59,7 +59,7 @@ main() {
         local inv_file="${INVENTORY_FILE:-${SYNC_INVENTORY_FILE:-}}"
         [[ -z "$inv_file" ]] && inv_file="$(_resolve_inventory_path)"
 
-        local group="${INVENTORY_GROUP:-all}"
+        local group="${INVENTORY_GROUP:-${SYNC_VERIFY_GROUP:-all}}"
 
         log_info "Verifying inventory: ${inv_file}"
         log_info "Group: ${group}"
@@ -70,7 +70,25 @@ main() {
         parse_inventory inv_repos "$inv_file" "$group"
 
         if [[ ${#inv_repos[@]} -eq 0 ]]; then
-            log_warn "No repos found in inventory for group: $group"
+            # Check if the group actually exists in the inventory
+            local -a _available_groups=()
+            mapfile -t _available_groups < <(list_inventory_groups "$inv_file")
+            local _group_exists=false
+            local _ag
+            for _ag in "${_available_groups[@]}"; do
+                [[ "$_ag" == "$group" ]] && _group_exists=true
+            done
+
+            if [[ "$_group_exists" == "false" ]]; then
+                log_warn "No group '${group}' found in inventory: ${inv_file}"
+                log_info "Available groups: $(
+                    IFS=', '
+                    echo "${_available_groups[*]}"
+                )"
+                log_info "Use --group <name> or set SYNC_VERIFY_GROUP in config."
+            else
+                log_warn "No repos found in inventory for group: $group"
+            fi
             exit 0
         fi
 
@@ -109,7 +127,7 @@ main() {
         local inv_file="${INVENTORY_FILE:-${SYNC_INVENTORY_FILE:-}}"
         [[ -z "$inv_file" ]] && inv_file="$(_resolve_inventory_path)"
 
-        local group="${INVENTORY_GROUP:-all}"
+        local group="${INVENTORY_GROUP:-${SYNC_VERIFY_GROUP:-all}}"
 
         log_info "Checking open issues"
         log_info "Inventory: ${inv_file}"
@@ -120,7 +138,25 @@ main() {
         parse_inventory inv_repos "$inv_file" "$group"
 
         if [[ ${#inv_repos[@]} -eq 0 ]]; then
-            log_warn "No repos found in inventory for group: $group"
+            # Check if the group actually exists in the inventory
+            local -a _available_groups=()
+            mapfile -t _available_groups < <(list_inventory_groups "$inv_file")
+            local _group_exists=false
+            local _ag
+            for _ag in "${_available_groups[@]}"; do
+                [[ "$_ag" == "$group" ]] && _group_exists=true
+            done
+
+            if [[ "$_group_exists" == "false" ]]; then
+                log_warn "No group '${group}' found in inventory: ${inv_file}"
+                log_info "Available groups: $(
+                    IFS=', '
+                    echo "${_available_groups[*]}"
+                )"
+                log_info "Use --group <name> or set SYNC_VERIFY_GROUP in config."
+            else
+                log_warn "No repos found in inventory for group: $group"
+            fi
             exit 0
         fi
 
