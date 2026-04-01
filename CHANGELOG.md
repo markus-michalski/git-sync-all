@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Nothing yet
 
+## [1.3.1] - 2026-04-01
+
+### Changed
+- add CONTRIBUTING.md with development setup and guidelines
+
 ## [1.3.0] - 2026-03-31
 
 ### Added
@@ -78,8 +83,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Makefile with install/uninstall/test/lint/format targets
 - GitHub Actions CI pipeline
 
-[Unreleased]: https://github.com/markus-michalski/git-sync-all/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/markus-michalski/git-sync-all/compare/v1.3.1...HEAD
 [1.0.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.0.0
 [1.1.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.1.0
 [1.2.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.2.0
 [1.3.0]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.3.0
+[1.3.1]: https://github.com/markus-michalski/git-sync-all/releases/tag/v1.3.1
