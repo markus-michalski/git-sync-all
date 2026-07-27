@@ -29,6 +29,22 @@ jobs:
       - name: Check formatting
         run: shfmt -d -i 4 -ci -bn bin/git-sync-all lib/*.sh
 
+  lint-powershell:
+    name: PSScriptAnalyzer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Analyze install.ps1
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+          $issues = Invoke-ScriptAnalyzer -Path ./install.ps1 -Severity Error
+          if ($issues) {
+            $issues | Format-Table RuleName, Line, Message -AutoSize
+            exit 1
+          }
+          Write-Host "PSScriptAnalyzer: all clean"
+
   test:
     name: Tests
     runs-on: ubuntu-latest
@@ -41,3 +57,20 @@ jobs:
           git config --global init.defaultBranch main
       - name: Run tests
         run: make test
+
+  test-windows:
+    name: Tests (Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Git
+        run: |
+          git config --global user.email "ci@test.com"
+          git config --global user.name "CI Test"
+          git config --global init.defaultBranch main
+      # No make on Windows runners - that is the point of install.ps1.
+      - name: Run tests
+        run: bash tests/run-tests.sh

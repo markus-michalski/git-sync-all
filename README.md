@@ -118,6 +118,40 @@ git-sync-all --setup-alias
 # Now you can use: git check
 ```
 
+### Windows
+
+Windows has no `make`, so use the PowerShell installer instead. It needs
+[Git for Windows](https://git-scm.com/download/win) — git-sync-all is a Bash
+program and runs on the bash.exe that ships with it.
+
+```powershell
+git clone https://github.com/markus-michalski/git-sync-all.git
+cd git-sync-all
+.\install.ps1
+```
+
+This installs to `%LOCALAPPDATA%\Programs\git-sync-all` and adds its `bin`
+directory to your user PATH. Open a new terminal afterwards, then
+`git-sync-all` works from PowerShell, cmd.exe and Git Bash alike.
+
+```powershell
+.\install.ps1 -Prefix C:\tools\git-sync-all   # custom location
+.\install.ps1 -Link                           # point at this clone, updates on git pull
+.\install.ps1 -NoPathUpdate                   # do not touch PATH
+.\install.ps1 -Uninstall                      # remove it again
+```
+
+If PowerShell blocks the script, run it via
+`powershell -ExecutionPolicy Bypass -File .\install.ps1`.
+
+Paths in `SYNC_BASE_DIRS` must use Git Bash syntax, because the setting is
+colon-separated and a drive letter would split it apart:
+
+```bash
+SYNC_BASE_DIRS="/c/Users/you/projekte"   # correct
+SYNC_BASE_DIRS="C:/Users/you/projekte"   # breaks: the colon separates entries
+```
+
 ### Uninstall
 
 ```bash
@@ -125,6 +159,8 @@ make uninstall PREFIX=$HOME/.local   # removes symlink or copy
 # or for system-wide:
 sudo make uninstall
 ```
+
+On Windows: `.\install.ps1 -Uninstall`
 
 ## Configuration
 
@@ -221,6 +257,7 @@ All machines stay in sync.
 
 - **Bash** 4.0+
 - **Git** 2.17+ (for `--prune-tags` support)
+- On Windows: **Git for Windows**, which provides both
 
 ## Development
 
