@@ -161,10 +161,16 @@ CONF
         log_ok "Config created: $config_file"
     fi
 
-    # Open in editor if interactive
+    # Open in editor if interactive.
+    # The default editor is not guaranteed to exist (Git Bash ships no nano),
+    # so fall back to just printing the path instead of failing.
     if [[ -t 0 ]]; then
         local editor="${EDITOR:-${VISUAL:-nano}}"
-        log_info "Opening config with $editor..."
-        "$editor" "$config_file"
+        if command -v "$editor" &>/dev/null; then
+            log_info "Opening config with $editor..."
+            "$editor" "$config_file"
+        else
+            log_info "Editor '$editor' not found. Edit manually: $config_file"
+        fi
     fi
 }
